@@ -1,0 +1,214 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Add Sport 2</title>
+<style type="text/css">
+body {
+	padding: 0;
+	margin: 0;
+	background-color: #010;
+	background-image: url(bg_board-green.png);
+	background-repeat: repeat;
+	color: #FFF;
+	font-family: Tahoma;
+	font-weight: normal;
+	font-size: 9pt;
+	overflow: hidden;
+}
+.screen {
+	background-color: #003;
+	margin: 0px;
+	padding: 0px;
+	height: 675px;
+	width: 1240px;
+	display: block;
+	position: relative;
+	background-image: url(bg_board-green.png);
+	background-repeat: no-repeat;
+	background-position: center center;	
+	border: 1px solid #020;
+	overflow: hidden;
+	cursor: default;
+}
+
+.spot {
+	position: absolute;
+	cursor: default;
+    background: green; /* For browsers that do not support gradients */
+    background: -webkit-radial-gradient(rgba(0,255,0,0.9) 15%, rgba(0,255,0,0.75) 5%, rgba(0,250,0,0) 75%); /* Safari 5.1-6.0 */
+    background: -o-radial-gradient(rgba(0,255,0,0.9) 15%, rgba(0,255,0,0.75) 5%, rgba(0,250,0,0) 75%); /* For Opera 11.6 to 12.0 */
+    background: -moz-radial-gradient(rgba(0,255,0,0.9) 15%, rgba(0,255,0,0.75) 5%,rgba(0,250,0,0) 75%); /* For Firefox 3.6 to 15 */
+    background: radial-gradient(rgba(0,255,0,0.9) 15%, rgba(0,255,0,0.75) 5%, rgba(0,250,0,0) 75%); /* Standard syntax (must be last) */
+	height: 20px;
+	width: 20px;
+	left: 0px;
+	top: 0px;
+	right: 0px;
+	bottom: 0px;
+	z-index: 100;
+	opacity: 0.7; /* others else IE */
+	filter: Alpha(Opacity=70, FinishOpacity=70, Style=1, StartX=0, StartY=0, FinishX=0, FinishY=0); /* IE + */
+	display: block;
+}
+#debug {
+	overflow: scroll;
+	width: 100%;
+	height: 300px;
+}
+</style>
+<script language="javascript">
+(function(w) {
+// function prototype
+Array.prototype.indexOf = function(itm) {
+		var ind = -1;
+		for(var i=0; i<this.length; i++) {
+			if(this[i] == itm) {
+				ind = i;
+				break;
+			}
+		}
+		return ind;
+	};
+Array.prototype.remove = function(itm) {
+		if(itm) {
+			var ind = this.indexOf(itm);
+			if(ind >= 0) {
+				this.splice(ind, 1);
+			}
+		}
+	};	
+w.$ = function(n) {
+		if(typeof n == 'string') {
+			return document.getElementById(n);
+		}
+		return n;
+	};
+
+// global vars
+w.sports = new Array();
+w.sp_index = 0;
+
+// object function
+w.add_spark = function(e) {
+		e = e || window.event;		
+		var owner = $('dvBoard');
+		var x = e.clientX - owner.offsetLeft -10;	// -10 = half spot size
+		var y = e.clientY - owner.offsetTop -10;
+		var dv = document.createElement('div');		
+		dv.className = 'spot';
+		dv.obj = {
+			'owner': owner,
+			index: w.sp_index++,
+			divObj: dv,
+			pX: 0, pY: 0,
+			dirX: 0,
+			dirY: 0,
+			isVisibled: true,
+			isDead: false,
+			init: function(x, y) {										
+					this.dirX = ((parseInt(2*Math.random())==1) ? 1:-1) * (1 + 2 * Math.random());
+					this.dirY = ((parseInt(2*Math.random())==1) ? 1:-1) * (1 + 2 * Math.random());
+					$('debug').Logs('Init &gt; ' + this.index+': dirx = ' + this.dirX + ', diry = ' + this.dirY);
+					this.setPos(x, y);
+					sports.push(this);
+					$('debug').Logs('Total: ' + sports.length);
+				},
+			setPos: function(x, y) {
+					this.pX = x;
+					this.pY = y;
+					var nx = parseInt(x);
+					var ny = parseInt(y)
+					//$('debug').Logs(this.index+ ': x = ' + nx + ', y = ' + ny);					
+					this.divObj.style.left = nx + 'px';
+					this.divObj.style.top = ny + 'px';
+				},
+			update: function() {
+					var x = this.pX + this.dirX;
+					var y = this.pY + this.dirY;					
+					this.setPos(x, y);
+					if((this.pX < -20) || (this.pY < -20) || (this.pX > this.owner.offsetWidth) || (this.pY > this.owner.offsetHeight)) {
+						this.isDead = true;	
+						this.hide();
+						$('debug').Logs(this.index+ ': is dead');
+					}
+				},
+			show: function() {
+					this.divObj.style.display = '';
+				},
+			hide: function() {
+					this.divObj.style.display = 'none';
+				},
+			remove: function() {
+					this.hide();
+					$('dvBoard').removeChild( this.divObj );
+					sports.remove( this );					
+					$('debug').Logs('Total: ' + sports.length);
+					//
+					delete this.divObj;
+					delete this;
+				},
+			toString: function() {
+					var s = '';
+					for(f in this) {
+						if(typeof this[f] == 'function') {
+							s += f + ': (function),\n';
+						}
+						else {
+							s += f + ': ' + this[f] + ',\n';
+						}
+					}
+					return s;
+				},
+			};
+		owner.appendChild(dv);
+		// initial 
+		dv.obj.init(x, y);
+	};
+	
+w.process = function() {
+		
+		for(var i=0; i<sports.length; i++) {
+			sports[i].update();
+		}
+		
+		// clear dead
+		var i = 0;
+		while(i<sports.length) {
+			obj = sports[i];
+			if(obj.isDead) {				
+				obj.remove();
+			}
+			else i++;
+		}
+		// clear dead object
+	};
+
+w.onload = function() {
+		$('debug').Logs = function(txt) {
+				if(typeof this._inc == 'undefined') this._inc = 0;
+				if(this._inc > 100) {
+					this.innerHTML = '';
+					this._inc = 0;
+				}
+				this.innerHTML = txt + '<br>' + this.innerHTML;
+				this._inc++;				
+			};
+		w.oncontextmenu = function() { return false; };
+		setInterval('process()', 100);
+	};
+
+})(window);
+
+
+</script>
+</head>
+
+<body contextmenu="return false" onselectstart="return false">
+Support: Safari 5.1-6.0, &nbsp; For Opera 11.6 to 12.0, &nbsp; For Firefox 3.6 to 15, &nbsp; For Google Chrome: (All), &nbsp; For IE: 10.0 (Edge only)
+<div align="center">
+	<div id="dvBoard" class="screen" onmousedown="add_spark(event)">&nbsp;</div>
+</div>
+<div id="debug"></div>
+</body>
+</html>

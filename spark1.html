@@ -1,0 +1,83 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Add Sport 1</title>
+<style type="text/css">
+body {
+	padding: 0;
+	margin: 0;
+	background-color: #010;
+	background-image: url(bg_board-green.png);
+	background-repeat: repeat;
+	color: #FFF;
+	font-family: Tahoma;
+	font-weight: normal;
+	font-size: 9pt;
+}
+.screen {
+	background-color: #003;
+	margin: 0px;
+	padding: 0px;
+	height: 775px;
+	width: 1240px;
+	display: block;
+	position: relative;
+	background-image: url(bg_board-green.png);
+	background-repeat: no-repeat;
+	background-position: center center;
+	cursor: pointer;
+}
+
+.spot {
+	position: absolute;
+    background-color: #010;
+    background: red; /* For browsers that do not support gradients */
+    background: -webkit-radial-gradient(rgba(0,255,0,0.9) 15%, rgba(0,255,0,0.75) 5%, rgba(0,250,0,0) 75%); /* Safari 5.1-6.0 */
+    background: -o-radial-gradient(rgba(0,255,0,0.9) 15%, rgba(0,255,0,0.75) 5%, rgba(0,250,0,0) 75%); /* For Opera 11.6 to 12.0 */
+    background: -moz-radial-gradient(rgba(0,255,0,0.9) 15%, rgba(0,255,0,0.75) 5%,rgba(0,250,0,0) 75%); /* For Firefox 3.6 to 15 */
+    background: radial-gradient(rgba(0,255,0,0.9) 15%, rgba(0,255,0,0.75) 5%, rgba(0,250,0,0) 75%); /* Standard syntax (must be last) */
+	height: 20px;
+	width: 20px;
+	left: 0px;
+	top: 0px;
+	right: 0px;
+	bottom: 0px;
+	z-index: 100;
+	opacity: 0.7; /* others else IE */
+	filter: Alpha(Opacity=70, FinishOpacity=70, Style=1, StartX=0, StartY=0, FinishX=0, FinishY=0); /* IE + */
+}
+</style>
+<script language="javascript">
+(function(w) {
+	w.$ = function(n) {
+		if(typeof n == 'string') {
+			return document.getElementById(n);
+		}
+		return n;
+	};
+	w.add_spark = function(e) {
+		e = e || window.event;
+		var owner = $('dvBoard');
+		var x = e.clientX - owner.offsetLeft -10;	// -10 = half spot size
+		var y = e.clientY - owner.offsetTop -10;
+		var dv = document.createElement('div');
+		dv.className = 'spot';
+		dv.style.left = x + 'px';
+		dv.style.top = y + 'px';
+		owner.appendChild(dv);
+	};
+})(this);
+
+
+</script>
+</head>
+
+<body contextmenu="return false" onselectstart="return false">
+Support: Safari 5.1-6.0, &nbsp; For Opera 11.6 to 12.0, &nbsp; For Firefox 3.6 to 15, &nbsp; For Google Chrome: (All), &nbsp; For IE: 10.0 (Edge only)
+<div align="center">
+<div id="dvBoard" class="screen" onclick="add_spark(event)">&nbsp;
+</div>
+</div>
+</body>
+</html>

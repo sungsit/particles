@@ -1,0 +1,531 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>E-Spark 5</title>
+<style type="text/css">
+body {
+	padding: 0;
+	margin: 0;
+	background-color: #010;
+	background-image: url(bg_board-green.png);
+	background-repeat: repeat;
+	color: #FFF;
+	font-family: Tahoma;
+	font-weight: normal;
+	font-size: 9pt;
+	overflow: hidden;
+}
+.screen {
+	background-color: #003;
+	margin: 0px;
+	padding: 0px;
+	height: 675px;
+	width: 1240px;
+	display: block;
+	position: relative;
+	background-image: url(bg_board-green.png);
+	background-repeat: no-repeat;
+	background-position: center center;	
+	border: 1px solid #020;
+	overflow: hidden;
+	cursor: default;
+}
+
+.spot {
+	position: absolute;
+	cursor: default;
+    background: green; /* For browsers that do not support gradients */
+    background: -webkit-radial-gradient(rgba(0,255,0,0.9) 15%, rgba(0,255,0,0.75) 5%, rgba(0,250,0,0) 75%); /* Safari 5.1-6.0 */
+    background: -o-radial-gradient(rgba(0,255,0,0.9) 15%, rgba(0,255,0,0.75) 5%, rgba(0,250,0,0) 75%); /* For Opera 11.6 to 12.0 */
+    background: -moz-radial-gradient(rgba(0,255,0,0.9) 15%, rgba(0,255,0,0.75) 5%,rgba(0,250,0,0) 75%); /* For Firefox 3.6 to 15 */
+    background: radial-gradient(rgba(0,255,0,0.9) 15%, rgba(0,255,0,0.75) 5%, rgba(0,250,0,0) 75%); /* Standard syntax (must be last) */
+	height: 20px;
+	width: 20px;
+	left: 0px;
+	top: 0px;
+	right: 0px;
+	bottom: 0px;
+	z-index: 1000;
+	/*
+	opacity: 1; 
+	filter: Alpha(Opacity=100, FinishOpacity=70, Style=1, StartX=0, StartY=0, FinishX=0, FinishY=0); 
+	*/
+	display: block;
+}
+.tail {
+	position: absolute;
+	cursor: default;
+    background: green; /* For browsers that do not support gradients */
+	/*
+    background: -webkit-radial-gradient(rgba(0,255,0,0.9) 20%, rgba(0,255,0,0.75) 5%, rgba(0,250,0,0) 75%); 
+    background: -o-radial-gradient(rgba(0,255,0,0.9) 20%, rgba(0,255,0,0.75) 5%, rgba(0,250,0,0) 75%); 
+    background: -moz-radial-gradient(rgba(0,255,0,0.9) 20%, rgba(0,255,0,0.75) 5%,rgba(0,250,0,0) 75%); 
+    background: radial-gradient(rgba(0,255,0,0.9) 20%, rgba(0,255,0,0.75) 5%, rgba(0,250,0,0) 75%); 
+	*/
+	height: 5px;
+	width: 5px;
+	left: 0px;
+	top: 0px;
+	right: 0px;
+	bottom: 0px;
+	z-index: 10;
+	opacity: 0.7; /* others else IE */
+	filter: Alpha(Opacity=70, FinishOpacity=70, Style=1, StartX=0, StartY=0, FinishX=0, FinishY=0); /* IE + */
+	display: block;
+}
+#debug {
+	overflow: scroll;
+	width: 100%;
+	height: 300px;
+}
+</style>
+<script language="javascript">
+(function(w) {	
+// function prototype
+Array.prototype.indexOf = function(itm) {
+		var ind = -1;
+		for(var i=0; i<this.length; i++) {
+			if(this[i] == itm) {
+				ind = i;
+				break;
+			}
+		}
+		return ind;
+	};
+Array.prototype.remove = function(itm) {
+		if(itm) {
+			var ind = this.indexOf(itm);
+			if(ind >= 0) {
+				this.splice(ind, 1);
+			}
+		}
+	};	
+
+// global vars
+var scope = w;
+	scope.sports = new Array();
+	scope.sp_index = 0;
+	scope.MAX_SPORTS = 100;
+	scope.is_pause = false;
+	scope.tail_length = 100;	// how long of tails
+	scope.tail_fade = 0 + parseInt(100 / tail_length);	// fade duration (opacity decrease);
+	
+scope.$ = function(n) {
+		if(typeof n == 'string') {
+			return document.getElementById(n);
+		}
+		return n;
+	};
+
+scope.AddTail = function(owner, x, y) {
+		// create div obj
+		var dv = document.createElement('div');		
+		dv.className = 'tail';
+		dv.style.left = x + 'px';
+		dv.style.top = y + 'px';
+		// tail object
+		var obj = {
+			'owner': owner,
+			index: scope.sp_index++,
+			divObj: dv,
+			alpha: 70,
+			is_dead: false,
+			update: function() {
+						this.alpha -= tail_fade;
+						if(this.alpha < 0) {
+							this.alpha = 0;
+							this.is_dead = true;
+						}						
+						this.divObj.style.opacity = this.alpha/100; /* others else IE */
+						this.divObj.style.filter = 'Alpha(Opacity='+this.alpha+', FinishOpacity='+this.alpha+',Style=0, StartX=0, StartY=0, FinishX=0, FinishY=0)'; /* IE + */						
+					},
+			remove: function() {
+						//$('debug').Logs(this.index+ ': is dead');
+						this.owner.removeChild( this.divObj );
+						scope.sports.remove( this );										
+						//
+						delete this.divObj;
+						delete this;
+					},
+		};
+		owner.appendChild(dv);
+		scope.sports.push(obj);
+		return obj;
+	};
+	
+scope.Spark = function(owner, x, y, dirx, diry) {
+		// create div obj
+		var dv = document.createElement('div');		
+		dv.className = 'spot';
+		// movement spot object
+		var obj = {
+			'owner': owner,
+			index: scope.sp_index++,
+			divObj: dv,
+			pX: 0, pY: 0,
+			dirX: 0,
+			dirY: 0,
+			pIndex: 0,
+			isVisibled: true,
+			is_dead: false,
+			_movePoints: [],
+			_moveConditions: [],
+			init: function(x, y, dirx, diry) {										
+					//this.dirX = ((parseInt(2*Math.random())==1) ? 1:-1) * (1 + 2 * Math.random());
+					//this.dirY = ((parseInt(2*Math.random())==1) ? 1:-1) * (1 + 2 * Math.random());
+					this._movePoints = new Array();
+					this.addPoint(x, y);
+					//
+					this.dirX = dirx;
+					this.dirY = diry;
+					$('debug').Logs('Init &gt; ' + this.index+': dirx = ' + this.dirX + ', diry = ' + this.dirY);
+					this.setPos(x, y);
+					sports.push(this);
+					$('debug').Logs('Total: ' + sports.length);
+				},
+			setPos: function(x, y) {
+					this.pX = x;
+					this.pY = y;
+					var nx = parseInt(x);
+					var ny = parseInt(y)
+					//$('debug').Logs(this.index+ ': x = ' + nx + ', y = ' + ny);					
+					this.divObj.style.left = nx + 'px';
+					this.divObj.style.top = ny + 'px';
+				},
+				
+			getLastPoint: function() {
+					var pid = this._movePoints.length-1;
+					if(pid >= 0) {
+						return this._movePoints[pid];
+					}
+					return (new Array(0, 0));
+				},
+				
+			getCondition: function() {					
+					if(this._moveConditions.length > 0) {
+						return this._moveConditions[0];
+					}
+					return null;
+				},				
+			removeCondition: function() {
+					return this._moveConditions.shift();
+				},
+				
+			addPoint: function(x, y) {
+					
+					//$('debug').Logs('Add point: ' + x + ',' + y);
+					this._movePoints.push([parseInt(x), parseInt(y)]);
+					this._moveConditions.push({
+								pType: 0,
+								dirX: x,
+								dirY: y,
+								startR: 0,
+								endR: 0,
+								dirR: 0,
+								toString: function() {
+										return 'pType: ' + this.pType + ',\n' 
+												+ 'dirX: ' + this.dirX + ',\n'
+												+ 'dirY: ' + this.dirY + ',\n'
+												+ 'startR: ' + this.startR + ',\n'
+												+ 'endR: ' + this.endR + ',\n'
+												+ 'dirR: ' + this.dirR + ''
+												;
+										},
+							});
+				},	
+				
+			addPath: function(x, y, speed) {	
+					x = parseInt(x);
+					y = parseInt(y);
+					// generate move linear points 					
+					var cur_p = this.getLastPoint();
+					var last_id = this._movePoints.length;
+					var lx = cur_p[0];
+					var ly = cur_p[1];					
+					
+					var dx = (x - lx);
+					var dy = (y - ly);					
+					var range = Math.sqrt((dx*dx) +  (dy*dy));					
+					var total_move = range / speed;
+					var step_x = dx / total_move;
+					var step_y = dy / total_move;					
+										
+					//$('debug').Logs('Add path: To ('+x+' , ' + y +') +- ('+step_x+' , '+step_y+' , '+ speed+') &gt;&gt; ' + range);
+					
+					this._movePoints.push([x, y]);
+					this._moveConditions.push({
+								pType: 1,
+								dirX: step_x,
+								dirY: step_y,
+								startR: 0,
+								endR: range,
+								dirR: speed,
+								toString: function() {
+										return 'pType: ' + this.pType + ',\n' 
+												+ 'dirX: ' + this.dirX + ',\n'
+												+ 'dirY: ' + this.dirY + ',\n'
+												+ 'startR: ' + this.startR + ',\n'
+												+ 'endR: ' + this.endR + ',\n'
+												+ 'dirR: ' + this.dirR + ''
+												;
+										},
+							});
+				},
+				
+			update: function() {				
+					var cd = this.getCondition();
+					//alert(cd);
+					if(cd) {
+						//$('debug').Logs(this.index + ': ' + cd);
+						var x,y;
+						// move path
+						if(cd.pType == 1) {
+							x = this.pX + cd.dirX;
+							y = this.pY + cd.dirY;
+							//
+							cd.startR += cd.dirR;
+							if(cd.startR >= cd.endR) {
+								//$('debug').Logs(this.index + ': remove condition.');
+								this.removeCondition();
+								delete cd;
+							}
+						}
+						// single point
+						else {							
+							x = cd.dirX;
+							y = cd.dirY;
+							this.removeCondition();
+							delete cd;
+						}
+						scope.AddTail(this.owner, this.pX+7, this.pY+7);
+						this.setPos(x, y);
+						//
+						if((this.pX < -20) || (this.pY < -20) || (this.pX > this.owner.offsetWidth) || (this.pY > this.owner.offsetHeight)) {
+							this.is_dead = true;	
+							//$('debug').Logs(this.index+ ': is dead');
+						}
+					}
+					else {
+						this.is_dead = true;	
+					}
+				},
+				
+			show: function() {
+					this.divObj.style.display = '';
+				},												
+			hide: function() {
+					this.divObj.style.display = 'none';
+				},				
+			remove: function() {				
+					//$('debug').Logs(this.index+ ': is dead');
+					//					
+					this.hide();
+					$('dvBoard').removeChild( this.divObj );
+					sports.remove( this );										
+					//
+					delete this.divObj;
+					delete this;
+					//$('debug').Logs('Total: ' + sports.length);
+				},
+			toString: function() {
+					var s = '';
+					for(f in this) {
+						if(typeof this[f] == 'function') {
+							s += f + ': (function),\n';
+						}
+						else {
+							s += f + ': ' + this[f] + ',\n';
+						}
+					}
+					return s;
+				},
+			};
+		owner.appendChild(dv);
+		// initial 
+		obj.init(x, y, dirx, diry);
+		//
+		return obj;
+	};
+	
+scope._generate_path_to = function(obj, toX, toY) {
+	
+		var temp_range = 100 + parseInt(50 * Math.random());
+		var cur_p = obj.getLastPoint();
+		var lx = parseInt(cur_p[0]);
+		var ly = parseInt(cur_p[1]);
+		// first must be dir 0
+		var move_dir = 0;
+		var dx = (toX - lx);
+		var dy = (toY - ly);
+		var move_range = Math.sqrt((dx*dx) +  (dy*dy));		
+		var range = Math.sqrt((dx*dx) +  (dy*dy));		
+		var cur_r = 0;
+		if(lx == toX) {
+			var dir = (toY > ly) ? 1 : -1;
+			var inc_r = temp_range;
+			while(cur_r < range) {					
+				if(move_dir == 1) {
+					inc_r = parseInt(temp_range / 10);
+					nx = lx + inc_r;
+					ny = ly;// + dir * inc_r;
+					move_dir = 0;
+				}
+				else if(move_dir == 2) {
+					inc_r = parseInt(temp_range / 10);
+					nx = lx - inc_r;
+					ny = ly;// + dir * inc_r;
+					move_dir = 0;
+				}				
+				else {
+					inc_r = temp_range - parseInt((temp_range/5) * Math.random());
+					nx = lx;
+					ny = ly + dir * inc_r;	
+					move_dir = 1 + parseInt(2 * Math.random());		
+				}				
+				//
+				obj.addPath(nx, ny, 5);				
+				cur_r += inc_r;
+				lx = nx;
+				ly = ny;	
+			}
+		}
+		// ly == toY
+		else {
+			var dir = (toX > lx) ? 1 : -1;
+			var inc_r = temp_range;
+			while(cur_r < range) {					
+				if(move_dir == 1) {
+					inc_r = parseInt(temp_range / 10);
+					ny = ly + inc_r;
+					nx = lx;// + dir * inc_r;
+					move_dir = 0;
+				}
+				else if(move_dir == 2) {
+					inc_r = parseInt(temp_range / 10);
+					ny = ly - inc_r;
+					nx = lx;// + dir * inc_r;
+					move_dir = 0;
+				}				
+				else {
+					inc_r = temp_range - parseInt((temp_range/5) * Math.random());
+					ny = ly;
+					nx = lx + dir * inc_r;	
+					move_dir = 1 + parseInt(2 * Math.random());		
+				}				
+				//
+				obj.addPath(nx, ny, 5);				
+				cur_r += inc_r;
+				lx = nx;
+				ly = ny;	
+			}
+		}
+		//obj.addPath(toX, toY, 5);
+	};
+	
+scope.generate_spark = function(owner, cx, cy, total, radius) {			
+		// add spark in all direction from center
+		var inc_a = 360 / total;		
+		var p, dirx, diry, nx, ny;		
+		var a = 360 * Math.random();		
+		for(p=0; p<total; p++) {			
+			var obj = Spark(owner, cx, cy, 0, 0);
+			// add first point
+			// obj.addPoint(x, y);									
+			// calc direction
+			nx = parseInt(cx + radius * Math.cos(a * Math.PI / 180));
+			ny = parseInt(cy + radius * Math.sin(a * Math.PI / 180));
+			obj.addPath(nx, ny, 5);
+						
+			// add next path follow by direction
+			if((a <= 45) || (a > (360-45))) {
+				nx = $('dvBoard').offsetWidth + 50;				
+			}
+			else if((a > 45) && (a < (90+45))) {
+				ny = $('dvBoard').offsetHeight + 50;
+			}
+			else if((a >= (90+45)) && (a < (180+45))) {
+				nx = -50;
+			}
+			else if((a >= (180+45)) && (a <= (360-45))) {
+				ny = -50;
+			}
+			_generate_path_to(obj, nx, ny);
+			// obj.addPath(nx, ny, 2);			
+			// next line
+			a += inc_a;
+			if(a >= 360) a -= 360;
+			//break;
+		}
+	};
+		
+scope.process = function() {
+		if(!scope.is_pause) {
+			var i;
+			for(i=0; i<scope.sports.length; i++) {
+				scope.sports[i].update();
+			}			
+			// clear dead
+			i = 0;
+			while(i<scope.sports.length) {
+				obj = scope.sports[i];
+				if(obj.is_dead) {				
+					obj.remove();
+				}
+				else i++;
+			}			
+		}
+	};
+	
+// object function
+scope.add_spark = function(e, total, first_r) {
+		e = e || window.event;				
+		var owner = $('dvBoard');
+		var x = e.clientX - owner.offsetLeft -10;	// -10 = half spot size
+		var y = e.clientY - owner.offsetTop -10;
+		var total_points = 15;
+		var first_radius = 75;
+		//
+		scope.generate_spark(owner, x, y, total_points, first_radius);
+	};
+	
+scope.onload = function() {
+		$('debug').Logs = function(txt) {
+				/*
+				if(typeof this._inc == 'undefined') this._inc = 0;
+				if(this._inc > 1200) {
+					this.innerHTML = '';
+					this._inc = 0;
+				}
+				this.innerHTML = txt + '<br>' + this.innerHTML;
+				this._inc++;
+				*/
+				console.log((txt.replace(/&gt;/ig, '>')).replace(/&nbsp;/ig, ' '));
+			};
+		scope.onkeypress = function(e) {
+				e = e||window.event;
+				var key = e ? ((e.keyCode ? (e.keyCode) : (e.which ? e.which : e.charCode))) : 0;
+				if(key == 32) {
+					scope.is_pause = !scope.is_pause;
+				}
+			};
+		scope.oncontextmenu = function() { return false; };
+		scope.onselectstart = function() { return false; };
+		setInterval('process()', 50);
+	};
+
+})(window);
+
+
+</script>
+</head>
+
+<body contextmenu="return false" onselectstart="return false">
+
+Support: Safari 5.1-6.0, &nbsp; For Opera 11.6 to 12.0, &nbsp; For Firefox 3.6 to 15, &nbsp; For Google Chrome: (All), &nbsp; For IE: 10.0 (Edge only)
+<div align="center">
+	<div id="dvBoard" class="screen" onmousedown="add_spark(event)">&nbsp;</div>
+</div>
+<div id="debug"></div>
+</body>
+</html>
